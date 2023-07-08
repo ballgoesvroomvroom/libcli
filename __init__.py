@@ -6,6 +6,9 @@ from Crypto.Hash import SHA512
 
 from includes.database_engine import database_engine
 
+# database collections
+database_engine.create_reader("users.json")
+
 class HistoryManager:
 	def __init__(self):
 		self.cacheHistory = -1 ## value of -1 means not yet cached; will store the length of self.content here for cache validation
@@ -64,7 +67,9 @@ class LibCLI:
 		# ask for a username
 		username = input("Username: ")
 
-		if not (username in )
+		if (username in database_engine.created_readers["users"]):
+			# check for pw eligibility
+			pass
 
 		
-print(AuthManager().passphrase)
+print(AuthManager().hash("0000"))

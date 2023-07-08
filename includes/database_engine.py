@@ -53,10 +53,8 @@ class DatabaseReader:
 		with open(self.filepath, "r") as f:
 			self.content = json.load(f)
 		
-        # compute hash
-        # hashes self.filename as a way to uniquely identify this instantiated object (in hex representation)
-		hash_object = SHA512.new(data=self.filename.encode("UTF-8"))
-        self.hash = hash_object.hexdigest()
+        # use self.filename as hash without the .json extension
+        self.hash = "".join(self.filename.split(".")[:-1])
 		
         return self.content
 	
