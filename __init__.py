@@ -2,14 +2,17 @@ import time
 import json
 import os
 from os import path
+from Crypto.Hash import SHA512
+
+from includes.database_engine import database_engine
 
 class HistoryManager:
 	def __init__(self):
 		self.cacheHistory = -1 ## value of -1 means not yet cached; will store the length of self.content here for cache validation
 		self.history = ""
 
-		with open(path.join(__file__, "/database/history.json"), "r") as f:
-			self.content = json.load(f)
+		self.reader = database_engine.create_reader("history.json")
+		self.content = self.reader.content # reference to .content within reader object so any chances to self.content will affect reader.content too
 
 	def logAction(self, userId, action, *args):
 		self.content.append([time.time(), userId, action, *args])
@@ -44,7 +47,13 @@ class AuthManager:
 					key, value = line.split("=", 1) # split by "=" ONCE only
 					os.environ[key] = value
 
-		self.passphrase = os.environ.get("PASSPHRASE")
+		self.salt = os.environ.get("BUTTER")
+	
+	def hash(self, msg):
+		# msg: string
+		# hashes msg into hex representation
+		hash_object = SHA512.new(data=(msg +self.salt).encode("ASCII")) # accepts byte strings, encode in ASCII format
+		return hash_object.hexdigest()
 
 
 class LibCLI:
@@ -54,6 +63,8 @@ class LibCLI:
 	def login(self):
 		# ask for a username
 		username = input("Username: ")
+
+		if not (username in )
 
 		
 print(AuthManager().passphrase)
