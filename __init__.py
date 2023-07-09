@@ -8,6 +8,7 @@ from includes.database_engine import database_engine
 
 # database collections
 database_engine.create_reader("users.json")
+database_engine.create_reader("session.json")
 
 class HistoryManager:
 	def __init__(self):
@@ -64,12 +65,21 @@ class LibCLI:
 		self.user = -1
 
 	def login(self):
+		# try to use cookies
+		if ('token' in database_engine.created_readers["session"]):
+			# validate token
+			
+		
 		# ask for a username
 		username = input("Username: ")
 
-		if (username in database_engine.created_readers["users"]):
-			# check for pw eligibility
-			pass
+		if not (username in database_engine.created_readers["users"]):
+			# check for validity of user
+			return False
 
+		password = input("Password (entered as plaintext, not hidden): ")
+		# valid, compare password hashes
+
+		
 		
 print(AuthManager().hash("0000"))
