@@ -29,8 +29,8 @@ class UtilCLI:
 	def compare_str(a, b):
 		# a, b: str
 		# compares both string alphabetically to determine order
-		# returns 1 if a > b
-		# returns 2 if a < b
+		# returns 1 if a > b (len(a) > len(b); 'Ab' > 'Aa')
+		# returns 2 if a < b (len(a) < len(b); 'Aa' < 'Ab')
 		# returns 3 if a == b
 
 		# convert them to lower case first for fair comparison
@@ -41,42 +41,71 @@ class UtilCLI:
 			if (b == ""):
 				# equal
 				return 3
-			else: return 1 # a is smaller than b
+			else: return 2 # a is smaller than b
 		elif (b == ""):
 			# b is smaller than a
-			return 2
+			return 1
 		elif (a == b):
 			# both the same
 			return 3
 
-		for idx in range(min(len(a), len(b))):
-			x, y = ord(a), ord(b)
+		print("PREMATURE")
+
+		lower_limit = min(len(a), len(b))
+		for idx in range(lower_limit):
+			x, y = ord(a[idx]), ord(b[idx])
 			if (x == y):
 				continue
 			elif (x > y):
 				# b is smaller
-				return 2
+				return 1
 			else:
 				# a is smaller
-				return 1
+				return 2
 
 		# not yet determined
 		# occurs when either one is an anchored substring of the other string
 		# e.g. a = "he", b = "hello"
 		if (len(a) < len(b)):
 			# a is smaller
-			return 1
+			return 2
 		else:
 			# a is bigger (should never be the same since equality check has been performed on a and b (proper string subsets))
-			return 2
+			return 1
+
+	def _quick_sort_partition(arr, comparison_fn, low, high):
+		# partition function, returns partition index
+		pivot_idx = high
+		ge_ele_ptr = low -1
+
+		for j in range(low, high):
+			print("COMPARING")
+			r = comparison_fn(arr[j], arr[pivot_idx])
+			if r == 1:
+				# element greater than pivot
+				ge_ele_ptr += 1
+				arr[ge_ele_ptr], arr[j] = arr[j], arr[ge_ele_ptr]
+
+		# swap pivot element with greater element
+		arr[ge_ele_ptr], arr[pivot_idx] = arr[pivot_idx], arr[ge_ele_ptr]
+
+		# return partition index
+		return ge_ele_ptr +1
 
 	def quick_sort(arr, comparison_fn, low=0, high=-1):
 		# sorts elements in arr
 		# will call comparison_fn with TWO elements as arguments
 		# comparison_fn to return 1 if a > b, or 2 if a <= b
 
+		if (high == -1): high = len(arr) -1 # use length instead of negative indices
+
 		if (low < high):
-			pivot_idx = -1
+			partition_idx = UtilCLI._quick_sort_partition(arr, comparison_fn, low, high)
+
+			UtilCLI.quick_sort(arr, comparison_fn, low, partition_idx -1)
+			UtilCLI.quick_sort(arr, comparison_fn, partition_idx +1, high)
+			print("RUNNNING")
+			pivot_idx = len(arr) -1; # end of array
 			ge_ele_ptr = -1
 
 			for j in range(low, high):
@@ -86,10 +115,19 @@ class UtilCLI:
 					ge_ele_ptr += 1
 					arr[ge_ele_ptr], arr[j] = arr[j], arr[ge_ele_ptr]
 
+	def bubble_sort(arr, comparison_fn):
+		print("INIT", arr)
+		for i in range(len(arr) -1):
+			for j in range(len(arr) -1 -i):
+				r = comparison_fn(arr[i], arr[i +1])
+				print(arr[i], arr[i +1], r)
+				if (r == 1):
+					# arr[i] > arr[i +1]
+					arr[i], arr[i +1] = arr[i +1], arr[i]
 
 
 
-# do some preprocessing on the book database (isbn.json)
+
 class LibraryData:
 	def __init__(self):
 		self.data = database_engine.created_readers["isbn"]
@@ -104,12 +142,17 @@ class LibraryData:
 		alpha_data = []
 		isbn_data = []
 
-		for isbn in self.data:
-			alpha_data.append([self.data[isbn].title, isbn])
+		for isbn in self.data["all"]:
+			alpha_data.append([self.data["all"][isbn]["title"], isbn])
 			isbn_data.append(isbn)
 
-		UtilCLI.quick_sort(alpha_data, lambda a, b: UtilCLI.compare_str(a[0], b[0])) # wrap in lambda since elements of alpha_data is [title, isbn]
-		UtilCLI.quick_sort(isbn_data, UtilCLI.compare_str) # no need to be wrapped
+		print("BEFORE", alpha_data)
+		UtilCLI.bubble_sort(alpha_data, lambda a, b: UtilCLI.compare_str(a[0], b[0])) # wrap in lambda since elements of alpha_data is [title, isbn]
+		UtilCLI.bubble_sort(isbn_data, UtilCLI.compare_str) # no need to be wrapped
+
+		print("AFTER", alpha_data)
+		for x in alpha_data:
+			print(x)
 
 class HistoryManager:
 	def __init__(self):
@@ -217,7 +260,7 @@ class LibCLI:
 		self.username = ""
 		self.session_start = time.perf_counter();
 
-	def create_new_screen():
+	def create_new_screen(self):
 		return Screen("{} | {}\n".format(self.username, self.access_level_verbose))
 
 	def set_user(self, username):
@@ -305,6 +348,7 @@ class LibCLI:
 	def kernel(self, command, args={}, flags=[]):
 		# executes the actual command
 		if (command == "help"):
+			pass
 
 		if (command == "show"):
 			if (name in args):
@@ -352,6 +396,11 @@ class LibCLI:
 
 
 if __name__ == "__main__":
+	# do some preprocessing on the book database (isbn.json)
+	LibraryData().process_data();
+	exit(1)
+
+	# call login handler to perform login
 	CLI = LibCLI();
 
 	# log in

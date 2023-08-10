@@ -50,7 +50,7 @@ class DatabaseReader:
 	def __init__(self, filename):
 		self.filename = filename
 		self.filepath = path.join(path.dirname(path.dirname(__file__)), "database", filename) # build filepath once
-		self.content = []
+		self.content = None; # will be assigned
 
 		# load content
 		with open(self.filepath, "r") as f:
@@ -72,6 +72,12 @@ class DatabaseReader:
 	def __contains__(self, item):
 		# for 'in' operator
 		return item in self.content
+
+	def __iter__(self):
+		return iter(self.content.keys())
+		# self._idx = 0;
+		# self._idx_lim = len(self.content)
+		# return self
 
 	def __repr__(self):
 		# output the data instead
