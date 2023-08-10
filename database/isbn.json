@@ -1,0 +1,24 @@
+{
+	"all": {
+		"978-0134846019": {
+			"title": "Data Analytics with Spark Using Python",
+			"type": 3,
+			"quantity": 6
+		},
+		"978-0133316032": {
+			"title": "Children's Reading",
+			"type": 2,
+			"quantity": 3
+		},
+		"978-1292100142": {
+			"title": "Global Marketing, 7th Edition",
+			"type": 2,
+			"quantity": 8
+		},
+		"978-1587147029": {
+			"title": "CCNA Cyber Ops SECFND #210-250 Official Cert Guide",
+			"type": 1,
+			"quantity": 5
+		}
+	}
+}

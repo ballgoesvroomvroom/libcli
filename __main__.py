@@ -8,6 +8,108 @@ from includes.database_engine import database_engine
 
 # database collections
 database_engine.create_reader("users.json")
+database_engine.create_reader("isbn.json")
+
+class UtilCLI:
+	# CLI utility class for misc actions not related to library function
+	def clear():
+		# clear screen
+		if (os.name == "nt"):
+			# windows
+			os.system("cls")
+		else:
+			# posix (mac, linux)
+			os.system("clear")
+
+	def white_lines(line):
+		# line: int (number of empty lines to print out)
+		# prints out empty lines depending on line
+		print("\n" *line)
+
+	def compare_str(a, b):
+		# a, b: str
+		# compares both string alphabetically to determine order
+		# returns 1 if a > b
+		# returns 2 if a < b
+		# returns 3 if a == b
+
+		# convert them to lower case first for fair comparison
+		a, b = a.lower(), b.lower()
+
+		# handle extreme cases (empty comparisons)
+		if (a == ""):
+			if (b == ""):
+				# equal
+				return 3
+			else: return 1 # a is smaller than b
+		elif (b == ""):
+			# b is smaller than a
+			return 2
+		elif (a == b):
+			# both the same
+			return 3
+
+		for idx in range(min(len(a), len(b))):
+			x, y = ord(a), ord(b)
+			if (x == y):
+				continue
+			elif (x > y):
+				# b is smaller
+				return 2
+			else:
+				# a is smaller
+				return 1
+
+		# not yet determined
+		# occurs when either one is an anchored substring of the other string
+		# e.g. a = "he", b = "hello"
+		if (len(a) < len(b)):
+			# a is smaller
+			return 1
+		else:
+			# a is bigger (should never be the same since equality check has been performed on a and b (proper string subsets))
+			return 2
+
+	def quick_sort(arr, comparison_fn, low=0, high=-1):
+		# sorts elements in arr
+		# will call comparison_fn with TWO elements as arguments
+		# comparison_fn to return 1 if a > b, or 2 if a <= b
+
+		if (low < high):
+			pivot_idx = -1
+			ge_ele_ptr = -1
+
+			for j in range(low, high):
+				r = comparison_fn(arr[j], arr[pivot_idx])
+				if r == 1:
+					# element greater than pivot
+					ge_ele_ptr += 1
+					arr[ge_ele_ptr], arr[j] = arr[j], arr[ge_ele_ptr]
+
+
+
+
+# do some preprocessing on the book database (isbn.json)
+class LibraryData:
+	def __init__(self):
+		self.data = database_engine.created_readers["isbn"]
+
+		# will be populated when self.process_data() is called
+		self.sorted_isbn = [];
+		self.sorted_title = [];
+
+	def process_data(self):
+		# populate self.sorted_isbn and self.sorted_title in ascending order
+		# implements quick sort
+		alpha_data = []
+		isbn_data = []
+
+		for isbn in self.data:
+			alpha_data.append([self.data[isbn].title, isbn])
+			isbn_data.append(isbn)
+
+		UtilCLI.quick_sort(alpha_data, lambda a, b: UtilCLI.compare_str(a[0], b[0])) # wrap in lambda since elements of alpha_data is [title, isbn]
+		UtilCLI.quick_sort(isbn_data, UtilCLI.compare_str) # no need to be wrapped
 
 class HistoryManager:
 	def __init__(self):
@@ -86,21 +188,21 @@ class AuthManager:
 			return 1
 		else: return 3
 
-class UtilCLI:
-	# CLI utility class for misc actions not related to library function
-	def clear():
-		# clear screen
-		if (os.name == "nt"):
-			# windows
-			os.system("cls")
-		else:
-			# posix (mac, linux)
-			os.system("clear")
+class Screen:
+	def __init__(self, header):
+		self.content = header # content will be built here
 
-	def white_lines(line):
-		# line: int (number of empty lines to print out)
-		# prints out empty lines depending on line
-		print("\n" *line)
+	def build(self, content):
+		# append content to self.content
+		self.content += str(content)
+
+	def out(self):
+		# clear screen first
+		UtilCLI.clear();
+		print(self.content);
+
+		# remove reference from self.content
+		self.content = None # await GC to clean up object
 
 
 class LibCLI:
@@ -115,19 +217,20 @@ class LibCLI:
 		self.username = ""
 		self.session_start = time.perf_counter();
 
+	def create_new_screen():
+		return Screen("{} | {}\n".format(self.username, self.access_level_verbose))
+
 	def set_user(self, username):
 		self.username = username
 		self.access_level = self.authManager.get_access_level(username)
 		self.access_level_verbose = self.authManager.get_access_level(username, True)
 
-		# clear screen, greet user
-		UtilCLI.clear();
-		print("{} | {}".format(self.username, self.access_level_verbose))
-		UtilCLI.white_lines(5);
+		# greet user with new screen
+		screen = self.create_new_screen()
+		screen.build("\n\n\n\nWelcome to The Library\nWhere knowledge overflows.\n\n\n\n")
 
-		print("Welcome to The Library\nWhere knowledge overflows.")
-
-		UtilCLI.white_lines(5);
+		# out the screen
+		screen.out();
 
 	def logout_handler(self):
 		# log out handler, performs log out tasks
@@ -142,6 +245,9 @@ class LibCLI:
 	def login_handler(self):
 		# login handler
 
+		# clear screen
+		UtilCLI.clear();
+
 		# get a valid username
 		username = ""
 		for u_retries in range(3):
@@ -151,7 +257,6 @@ class LibCLI:
 				print("Empty username entered, please try again.")
 				continue
 
-			print(database_engine.created_readers["users"])
 			if (username_inp in database_engine.created_readers["users"]):
 				username = username_inp; # only assign upon successful (so post-loop control knows whether max_retries was hit)
 				break
@@ -181,8 +286,70 @@ class LibCLI:
 				if (p_retries == 2):
 					# max retries
 					print("Invalid password, maximum attempts reached, please attempt to log in again.")
+					return False # return an exit code of False so main control flow knows login was unsuccessful
 				else:
 					print("Invalid password, please try again ({} attempts left).".format(3 -p_retries -1))
+
+		return True # returns true so main control flow knows login was successful
+
+	def displayBooks(n=10):
+		# displays the interface to select books (a list is visually available)
+		# sorted by isbn no (s flag) or by title name (a flag)
+		# n being page size
+		screen = self.create_new_screen()
+		screen.build("Search for books\n\n")
+
+		data = database_engine.created_readers["isbn"]
+
+
+	def kernel(self, command, args={}, flags=[]):
+		# executes the actual command
+		if (command == "help"):
+
+		if (command == "show"):
+			if (name in args):
+				# name present
+				self.showBookDetails(args.name)
+			else:
+				self.showAllBooks(n=10)
+
+
+	def interface(self):
+		# responsible for retrieving ONE single command
+		inpt = input("System: ")
+
+		# parse input (extract command, space-separated)
+		data = inpt.split(" ")
+		command = data[0]
+
+		# differentiate args from flags
+		args, flags = {}, []
+		for value in data[1:]:
+			if (value.find("=") != -1):
+				# argument found, can only contains two parts (key=value)
+				split = value.split("=")
+				if (len(split) != 2):
+					print("[ERROR]: malformed input, there can only contain one '=' for every key value pair argument.")
+					return
+
+				key, value = split # tuple unpacking (with list)
+				args[key] = value
+			elif (value[0] == "-"):
+				# should exist as the first element
+				# e.g. '-i' for i flag
+				if (value.count("-") != 1):
+					# there can only exist one flag demarker
+					print("[ERROR]: malformed input, there can only exist one '-' (flag marker) per flag.")
+					return
+				else:
+					flags.append(value[1:]) # append without the hyphen
+			else:
+				# unrecognised input
+				print("[ERROR]: malformed input, unknown character sequence in command, '{}'.".format(value))
+				return
+
+		self.kernel(command, args=args, flags=flags)
+
 
 if __name__ == "__main__":
 	CLI = LibCLI();
@@ -193,9 +360,10 @@ if __name__ == "__main__":
 	if not (success):
 		# exit program
 		print("Failed to authenticate, please try re-running the program again.")
-		return
+		exit(1); # exit program with status code of 1
 
 	# run commands (initiate main control loop)
 	while CLI.active:
+		CLI.interface()
 
 LibCLI().login_handler();

@@ -53,7 +53,6 @@ class DatabaseReader:
 		self.content = []
 
 		# load content
-		print("[DEBUG]: opening", self.filepath)
 		with open(self.filepath, "r") as f:
 			self.content = json.load(f)
 		
@@ -62,7 +61,6 @@ class DatabaseReader:
 
 	def __getitem__(self, key):
 		# wrapper for referencing the data directly
-		print("REFERENCE", key)
 		if (key in self.content):
 			return self.content[key]
 		else:
