@@ -49,8 +49,6 @@ class UtilCLI:
 			# both the same
 			return 3
 
-		print("PREMATURE")
-
 		lower_limit = min(len(a), len(b))
 		for idx in range(lower_limit):
 			x, y = ord(a[idx]), ord(b[idx])
@@ -79,7 +77,6 @@ class UtilCLI:
 		ge_ele_ptr = low -1
 
 		for j in range(low, high):
-			print("COMPARING")
 			r = comparison_fn(arr[j], arr[pivot_idx])
 			if r == 1:
 				# element greater than pivot
@@ -104,7 +101,6 @@ class UtilCLI:
 
 			UtilCLI.quick_sort(arr, comparison_fn, low, partition_idx -1)
 			UtilCLI.quick_sort(arr, comparison_fn, partition_idx +1, high)
-			print("RUNNNING")
 			pivot_idx = len(arr) -1; # end of array
 			ge_ele_ptr = -1
 
@@ -116,25 +112,48 @@ class UtilCLI:
 					arr[ge_ele_ptr], arr[j] = arr[j], arr[ge_ele_ptr]
 
 	def bubble_sort(arr, comparison_fn):
-		print("INIT", arr)
 		for i in range(len(arr) -1):
 			for j in range(len(arr) -1 -i):
-				r = comparison_fn(arr[i], arr[i +1])
-				print(arr[i], arr[i +1], r)
+				r = comparison_fn(arr[j], arr[j +1])
+				print(j, arr[j], arr[j +1], r)
 				if (r == 1):
-					# arr[i] > arr[i +1]
-					arr[i], arr[i +1] = arr[i +1], arr[i]
+					# arr[j] > arr[j +1]
+					arr[j], arr[j +1] = arr[j +1], arr[j]
 
 
 
 
 class LibraryData:
+	BOOK_TYPE = {
+		"Hard Cover": 1,
+		"Paper Back": 2,
+		"EBook": 3
+	}
+
 	def __init__(self):
 		self.data = database_engine.created_readers["isbn"]
 
 		# will be populated when self.process_data() is called
 		self.sorted_isbn = [];
 		self.sorted_title = [];
+
+	def validate_isbn(isbn_code):
+		# returns true if isbn is validated, follows 3x-13y format
+		if (isbn_code.find("-") == -1):
+			# no hyphen
+			return False
+
+		s = isbn_code.split("-")
+		if (len(s) != 2 or len(s[0]) != 3 or len(s[1]) != 13):
+			# invalid length
+			return False
+
+		if (not s[0].isdigit() or not (s[1].isdigit())):
+			# not valid digits
+			return False
+
+		# passed all checks
+		return True
 
 	def process_data(self):
 		# populate self.sorted_isbn and self.sorted_title in ascending order
@@ -146,13 +165,55 @@ class LibraryData:
 			alpha_data.append([self.data["all"][isbn]["title"], isbn])
 			isbn_data.append(isbn)
 
-		print("BEFORE", alpha_data)
 		UtilCLI.bubble_sort(alpha_data, lambda a, b: UtilCLI.compare_str(a[0], b[0])) # wrap in lambda since elements of alpha_data is [title, isbn]
 		UtilCLI.bubble_sort(isbn_data, UtilCLI.compare_str) # no need to be wrapped
 
-		print("AFTER", alpha_data)
-		for x in alpha_data:
-			print(x)
+		# transform alpha_data to primitive elements instead of an array
+		primitive_alpha_data = []; # stores alpha_data but without the title reference, simply stores the isbn reference (since alpha_data is already sorted)
+		total_length = len(alpha_data)
+		for i in range(total_length):
+			primitive_alpha_data.append(alpha_data[i][1]) # push only the isbn reference (of string type - primitive)
+
+		self.sorted_isbn = isbn_data # elements already in primitive data type
+		self.sorted_title = primitive_alpha_data
+
+
+	def add_book(self, book_data):
+		# book_data: {isbn: str, title: str, quantity: integer, type: integer}
+		# adds a book to self.data, returns boolean indicating result of operation (true for success)
+		self.data[book_data["isbn"]] = {
+			"title": book_data["title"],
+			"type": book_data["type"],
+			"quantity": book_data["quantity"]
+		}
+
+		# update references
+		self.process_data()
+
+		# return status true
+		return true
+
+	def search_book(self, search_params):
+		# search_params: {query: str?, type: integer?}
+		# returns a sorted array based on search_params
+		interested = []; # build a list of interested search candidates to search
+
+		# search parameters
+		queryStr = search_params["query"]
+		typeFilter = search_params["type"]
+
+		for isbn_code in self.sorted_title:
+			if (queryStr != None and self.data[isbn_code]["title"].find(queryStr) != -1):
+				# interested candidate (name match)
+				if (typeFilter != None and self.data[isbn_code]["type"] == typeFilter):
+					# interested candidate (matches type)
+					pass
+				elif (typeFilter == None):
+					# interested candidate (no type match performed)
+					pass
+
+			# if (self.data[isbn_code]["title"].find(search_params))
+		pass
 
 class HistoryManager:
 	def __init__(self):
@@ -279,10 +340,11 @@ class LibCLI:
 		# log out handler, performs log out tasks
 		"""
 		tasks to do
-		1. write to database
+		1. write to database (push all database_readers)
 		2. output goodbye message
 		"""
 
+		database_engine.created_readers["isbn"].push()
 		print("")
 
 	def login_handler(self):
@@ -356,6 +418,142 @@ class LibCLI:
 				self.showBookDetails(args.name)
 			else:
 				self.showAllBooks(n=10)
+		elif (command == "add"):
+			book_data = {
+				"isbn": args.get("isbn"),
+				"title": args.get("title"),
+				"quantity": args.get("quantity"),
+				"type": args.get("type")
+			}
+
+			# ask for all the book details in sequence, use data provided in args as default
+			print("Data required for book entry.")
+
+			# isbn code
+			if (book_data["isbn"] != None and LibraryData.validate_isbn(book_data["isbn"])):
+				# has default data (valid isbn)
+				isbn_inpt = input("ISBN ({}): ".format(book_data["isbn"]))
+
+				if (isbn_inpt == ""):
+					# empty input, use default
+					pass
+				else:
+					# value keyed in, overwrite arguments
+					book_data["isbn"] = isbn_inpt
+			else:
+				# no default data can be used
+				if (book_data["isbn"] != None):
+					# invalid isbn, warn user
+					print("[WARN]: ISBN code provided in the wrong format, please conform to xxx-yyyyyyyyyyyyy (3x-13y).")
+
+				isbn_inpt = "";
+				while not LibraryData.validate_isbn(isbn_inpt):
+					# input required
+					isbn_inpt = input("ISBN (-1 to exit): ")
+					if (isbn_inpt == "-1"):
+						break
+
+				if (isbn_inpt == "-1"):
+					# cancel command
+					return
+				else:
+					# validated isbn_inpt
+					book_data["isbn"] = isbn_inpt
+
+			# title input
+			if (book_data["title"] != None and len(book_data["title"]) >= 1):
+				# has default data (valid title)
+				title_inpt = input("Title ({}): ".format(book_data["title"]))
+
+				if (title_inpt == ""):
+					# empty input, use default
+					pass
+				else:
+					# value keyed in, overwrite arguments
+					book_data["title"] = title_inpt
+			else:
+				# no default data can be used
+				if (book_data["title"] != None):
+					# invalid isbn, warn user
+					print("[WARN]: Title provided in wrong format, please conform to the restriction of at least 1 character.")
+
+				title_inpt = "";
+				while title_inpt == "":
+					# input required
+					title_inpt = input("Title (-1 to exit): ")
+					if (title_inpt == "-1"):
+						break
+
+				if (title_inpt == "-1"):
+					# cancel command
+					return
+				else:
+					# validated title input
+					book_data["title"] = title_inpt
+
+			# quantity input
+			if (book_data["quantity"] != None and book_data["quantity"].isdigit() and book_data["quantity"][0] != "0"):
+				# has default data (valid qty, positive integer with no leading zeroes as to suggest non-zero values)
+				qty_inpt = input("Quantity ({}): ".format(book_data["quantity"]))
+
+				if (qty_inpt == ""):
+					# empty input, use default
+					# typecast default to int too (since parsed from command line)
+					book_data["quantity"] = int(book_data["quantity"])
+				else:
+					# value keyed in, overwrite arguments
+					book_data["quantity"] = int(qty_inpt)
+			else:
+				# no default data can be used
+				if (book_data["quantity"] != None):
+					# invalid isbn, warn user
+					print("[WARN]: Quantity provided in wrong format, please enter a positive non-negative integer without zero padding.")
+
+				qty_inpt = "";
+				while not qty_inpt.isdigit() or qty_inpt[0] == "0":
+					# input required
+					qty_inpt = input("Quantity (-1 to exit): ")
+					if (qty_inpt == "-1"):
+						break
+
+				if (qty_inpt == "-1"):
+					# cancel command
+					return
+				else:
+					# validated quantity input
+					book_data["quantity"] = int(qty_inpt) # typecast it to an integer first
+
+			# type input
+			if (book_data["type"] != None and book_data["type"].isdigit() and 1 <= int(book_data["type"][0]) <= 3):
+				# has default data (valid qty, positive integer with no leading zeroes as to suggest non-zero values)
+				type_inpt = input("Type\n\t1. Hard cover\n\t2. Paper back\n\t3. EBook\n({}): ".format(book_data["type"]))
+
+				if (type_inpt == ""):
+					# empty input, use default
+					# typecast default to int too (since parsed from command line)
+					book_data["type"] = int(book_data["type"])
+				else:
+					# value keyed in, overwrite arguments
+					book_data["type"] = int(type_inpt)
+			else:
+				# no default data can be used
+				if (book_data["type"] != None):
+					# invalid type, warn user
+					print("[WARN]: Type value provided in wrong format, please enter a selection of book types from 1-3 (inclusive).")
+
+				type_inpt = "";
+				while not type_inpt.isdigit() or not(1 <= int(type_inpt) <= 3):
+					# input required
+					type_inpt = input("Type\n\t1. Hard cover\n\t2. Paper back\n\t3. EBook\n(-1 to exit): ")
+					if (type_inpt == "-1"):
+						break
+
+				if (type_inpt == "-1"):
+					# cancel command
+					return
+				else:
+					# validated type input
+					book_data["type"] = int(type_inpt) # typecast it to an integer first
 
 
 	def interface(self):
@@ -398,7 +596,6 @@ class LibCLI:
 if __name__ == "__main__":
 	# do some preprocessing on the book database (isbn.json)
 	LibraryData().process_data();
-	exit(1)
 
 	# call login handler to perform login
 	CLI = LibCLI();
