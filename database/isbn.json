@@ -1,24 +1,272 @@
 {
-	"all": {
-		"978-0134846019": {
-			"title": "Data Analytics with Spark Using Python",
-			"type": 3,
-			"quantity": 6
-		},
-		"978-0133316032": {
-			"title": "Children's Reading",
-			"type": 2,
-			"quantity": 3
-		},
-		"978-1292100142": {
-			"title": "Global Marketing, 7th Edition",
-			"type": 2,
-			"quantity": 8
-		},
-		"978-1587147029": {
-			"title": "CCNA Cyber Ops SECFND #210-250 Official Cert Guide",
-			"type": 1,
-			"quantity": 5
-		}
+	"978-0134846019": {
+		"title": "Data Analytics with Spark Using Python",
+		"type": 3,
+		"quantity": 6
+	},
+	"978-0133316032": {
+		"title": "Children's Reading",
+		"type": 2,
+		"quantity": 3
+	},
+	"978-1292100142": {
+		"title": "Global Marketing, 7th Edition",
+		"type": 2,
+		"quantity": 8
+	},
+	"978-1587147029": {
+		"title": "CCNA Cyber Ops SECFND #210-250 Official Cert Guide",
+		"type": 1,
+		"quantity": 5
+	},
+	"978-0590353427": {
+		"title": "Harry Potter and the Sorcerer's Stone",
+		"type": 3,
+		"quantity": 10
+	},
+	"978-0061120084": {
+		"title": "To Kill a Mockingbird",
+		"type": 3,
+		"quantity": 7
+	},
+	"978-0060256654": {
+		"title": "Where the Wild Things Are",
+		"type": 3,
+		"quantity": 4
+	},
+	"978-0134687058": {
+		"title": "Artificial Intelligence: A Modern Approach",
+		"type": 2,
+		"quantity": 2
+	},
+	"978-0262033848": {
+		"title": "Introduction to Algorithms",
+		"type": 2,
+		"quantity": 5
+	},
+	"978-0596007126": {
+		"title": "Head First Design Patterns",
+		"type": 2,
+		"quantity": 3
+	},
+	"978-1451673319": {
+		"title": "The Great Gatsby",
+		"type": 3,
+		"quantity": 9
+	},
+	"978-0132350884": {
+		"title": "Clean Code: A Handbook of Agile Software Craftsmanship",
+		"type": 2,
+		"quantity": 6
+	},
+	"978-1449365035": {
+		"title": "Python Crash Course",
+		"type": 2,
+		"quantity": 7
+	},
+	"978-1492071683": {
+		"title": "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow",
+		"type": 2,
+		"quantity": 4
+	},
+	"978-0262539029": {
+		"title": "Deep Learning",
+		"type": 2,
+		"quantity": 3
+	},
+	"978-0062316097": {
+		"title": "1984",
+		"type": 3,
+		"quantity": 8
+	},
+	"978-1451639612": {
+		"title": "Sapiens: A Brief History of Humankind",
+		"type": 2,
+		"quantity": 5
+	},
+	"978-0140449146": {
+		"title": "Crime and Punishment",
+		"type": 3,
+		"quantity": 6
+	},
+	"978-0735619678": {
+		"title": "Code Complete: A Practical Handbook of Software Construction",
+		"type": 2,
+		"quantity": 4
+	},
+	"978-0060935467": {
+		"title": "The Alchemist",
+		"type": 3,
+		"quantity": 3
+	},
+	"978-0321125217": {
+		"title": "Design Patterns: Elements of Reusable Object-Oriented Software",
+		"type": 2,
+		"quantity": 5
+	},
+	"978-1451637533": {
+		"title": "The Lean Startup: How Today's Entrepreneurs Use Continuous Innovation to Create Radically Successful Businesses",
+		"type": 2,
+		"quantity": 3
+	},
+	"978-0062567734": {
+		"title": "Educated: A Memoir",
+		"type": 3,
+		"quantity": 7
+	},
+	"978-0452284234": {
+		"title": "The Catcher in the Rye",
+		"type": 3,
+		"quantity": 4
+	},
+	"978-0062315007": {
+		"title": "The Hobbit",
+		"type": 3,
+		"quantity": 5
+	},
+	"978-0316769174": {
+		"title": "The Odyssey",
+		"type": 3,
+		"quantity": 6
+	},
+	"978-0547928227": {
+		"title": "A Game of Thrones",
+		"type": 3,
+		"quantity": 8
+	},
+	"978-1452168387": {
+		"title": "The Subtle Art of Not Giving a F*ck",
+		"type": 2,
+		"quantity": 7
+	},
+	"978-0134092669": {
+		"title": "Introduction to the Theory of Computation",
+		"type": 2,
+		"quantity": 3
+	},
+	"978-0553380163": {
+		"title": "Dune",
+		"type": 3,
+		"quantity": 5
+	},
+	"978-0735211292": {
+		"title": "Atomic Habits: An Easy & Proven Way to Build Good Habits & Break Bad Ones",
+		"type": 2,
+		"quantity": 4
+	},
+	"978-0345391803": {
+		"title": "The Hitchhiker's Guide to the Galaxy",
+		"type": 3,
+		"quantity": 6
+	},
+	"978-0140283334": {
+		"title": "Pride and Prejudice",
+		"type": 3,
+		"quantity": 3
+	},
+	"978-1400032493": {
+		"title": "Brave New World",
+		"type": 3,
+		"quantity": 5
+	},
+	"978-0064407663": {
+		"title": "Bridge to Terabithia",
+		"type": 3,
+		"quantity": 4
+	},
+	"978-0525536335": {
+		"title": "The Silent Patient",
+		"type": 3,
+		"quantity": 6
+	},
+	"978-0141439846": {
+		"title": "Dracula",
+		"type": 3,
+		"quantity": 3
+	},
+	"978-0345370771": {
+		"title": "The Fellowship of the Ring",
+		"type": 3,
+		"quantity": 5
+	},
+	"978-0064400558": {
+		"title": "Matilda",
+		"type": 3,
+		"quantity": 4
+	},
+	"978-0316769488": {
+		"title": "To Kill a Mockingbird (60th Anniversary Edition)",
+		"type": 3,
+		"quantity": 6
+	},
+	"978-0061122415": {
+		"title": "The Road",
+		"type": 3,
+		"quantity": 3
+	},
+	"978-0143125471": {
+		"title": "The Goldfinch",
+		"type": 3,
+		"quantity": 5
+	},
+	"978-0060959470": {
+		"title": "The Power of Now: A Guide to Spiritual Enlightenment",
+		"type": 2,
+		"quantity": 4
+	},
+	"978-0547928227": {
+		"title": "A Clash of Kings",
+		"type": 3,
+		"quantity": 6
+	},
+	"978-0064409049": {
+		"title": "Charlotte's Web",
+		"type": 3,
+		"quantity": 3
+	},
+	"978-0307278739": {
+		"title": "Fahrenheit 451",
+		"type": 3,
+		"quantity": 5
+	},
+	"978-0064404990": {
+		"title": "Holes",
+		"type": 3,
+		"quantity": 4
+	},
+	"978-0452284234": {
+		"title": "The Grapes of Wrath",
+		"type": 3,
+		"quantity": 6
+	},
+	"978-0141188936": {
+		"title": "Nineteen Eighty-Four",
+		"type": 3,
+		"quantity": 3
+	},
+	"978-0812980483": {
+		"title": "The Catcher in the Rye",
+		"type": 3,
+		"quantity": 5
+	},
+	"978-0547928227": {
+		"title": "A Storm of Swords",
+		"type": 3,
+		"quantity": 4
+	},
+	"978-0452284234": {
+		"title": "The Shining",
+		"type": 3,
+		"quantity": 6
+	},
+	"978-0141439846": {
+		"title": "Frankenstein",
+		"type": 3,
+		"quantity": 3
+	},
+	"978-0812980483": {
+		"title": "The Picture of Dorian Gray",
+		"type": 3,
+		"quantity": 5
 	}
 }

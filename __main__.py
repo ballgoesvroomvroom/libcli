@@ -1,4 +1,5 @@
 import time
+import random
 import json
 import os
 from os import path
@@ -25,6 +26,30 @@ class UtilCLI:
 		# line: int (number of empty lines to print out)
 		# prints out empty lines depending on line
 		print("\n" *line)
+
+	def levenshtein_distance(a, b):
+		# returns the levenshtein distance between two strings
+		la, lb = len(a) +1, len(b) +1 # represents m and n (distance being an m * n matrix)
+		distance = [[0 for x in range(la)] for y in range(lb)] # initiate array
+
+		# first row, first column
+		for x in range(la):
+			distance[0][x] = x
+
+		for y in range(lb):
+			distance[y][0] = y
+
+		for y in range(1, lb):
+			for x in range(1, la):
+				sc = 1 if a[x -1] != b[y -1] else 0 # substitution cost
+
+				distance[y][x] = min(
+					distance[y -1][x] +1,
+					distance[y][x -1] +1,
+					distance[y -1][x -1] +sc
+				)
+
+		return distance[lb -1][la -1]
 
 	def compare_str(a, b):
 		# a, b: str
@@ -73,18 +98,18 @@ class UtilCLI:
 
 	def _quick_sort_partition(arr, comparison_fn, low, high):
 		# partition function, returns partition index
-		pivot_idx = high
+		pivot_idx = random.randint(low, high)
 		ge_ele_ptr = low -1
 
 		for j in range(low, high):
 			r = comparison_fn(arr[j], arr[pivot_idx])
-			if r == 1:
+			if r == 2:
 				# element greater than pivot
 				ge_ele_ptr += 1
 				arr[ge_ele_ptr], arr[j] = arr[j], arr[ge_ele_ptr]
 
 		# swap pivot element with greater element
-		arr[ge_ele_ptr], arr[pivot_idx] = arr[pivot_idx], arr[ge_ele_ptr]
+		arr[ge_ele_ptr +1], arr[pivot_idx] = arr[pivot_idx], arr[ge_ele_ptr +1]
 
 		# return partition index
 		return ge_ele_ptr +1
@@ -101,17 +126,13 @@ class UtilCLI:
 
 			UtilCLI.quick_sort(arr, comparison_fn, low, partition_idx -1)
 			UtilCLI.quick_sort(arr, comparison_fn, partition_idx +1, high)
-			pivot_idx = len(arr) -1; # end of array
-			ge_ele_ptr = -1
-
-			for j in range(low, high):
-				r = comparison_fn(arr[j], arr[pivot_idx])
-				if r == 1:
-					# element greater than pivot
-					ge_ele_ptr += 1
-					arr[ge_ele_ptr], arr[j] = arr[j], arr[ge_ele_ptr]
 
 	def bubble_sort(arr, comparison_fn):
+		# comparison function
+		# returns 1 if a > b (len(a) > len(b); 'Ab' > 'Aa')
+		# returns 2 if a < b (len(a) < len(b); 'Aa' < 'Ab')
+		# returns 3 if a == b
+
 		for i in range(len(arr) -1):
 			for j in range(len(arr) -1 -i):
 				r = comparison_fn(arr[j], arr[j +1])
@@ -161,8 +182,8 @@ class LibraryData:
 		alpha_data = []
 		isbn_data = []
 
-		for isbn in self.data["all"]:
-			alpha_data.append([self.data["all"][isbn]["title"], isbn])
+		for isbn in self.data:
+			alpha_data.append([self.data[isbn]["title"], isbn])
 			isbn_data.append(isbn)
 
 		UtilCLI.bubble_sort(alpha_data, lambda a, b: UtilCLI.compare_str(a[0], b[0])) # wrap in lambda since elements of alpha_data is [title, isbn]
@@ -191,29 +212,45 @@ class LibraryData:
 		self.process_data()
 
 		# return status true
-		return true
+		return True
 
 	def search_book(self, search_params):
-		# search_params: {query: str?, type: integer?}
-		# returns a sorted array based on search_params
+		# search_params: {query: str?, type: integer?, size: integer?}
+		# returns sorted array based on search_params (sorted based on relevance) of size n (defined in search_params.size or by default 10)
+		# also yields the remaining pages left to go
 		interested = []; # build a list of interested search candidates to search
 
 		# search parameters
-		queryStr = search_params["query"]
-		typeFilter = search_params["type"]
+		queryStr = search_params.get("query")
+		typeFilter = search_params.get("type")
 
+		ld_threshold = 100 # levenshtein threshold (i.e. any distance greater than this value is not a candidate of interest)
 		for isbn_code in self.sorted_title:
-			if (queryStr != None and self.data[isbn_code]["title"].find(queryStr) != -1):
-				# interested candidate (name match)
-				if (typeFilter != None and self.data[isbn_code]["type"] == typeFilter):
-					# interested candidate (matches type)
-					pass
-				elif (typeFilter == None):
-					# interested candidate (no type match performed)
-					pass
+			# compare levenshtein distances with white spaces removed
+			if (queryStr != None):
+				# has query string (title to query)
+				ld = UtilCLI.levenshtein_distance(self.data[isbn_code]["title"], queryStr)
+				if (ld < ld_threshold):
+					# interest candidate (title match)
 
-			# if (self.data[isbn_code]["title"].find(search_params))
-		pass
+					# filter out candidates
+					if ((typeFilter != None and self.data[isbn_code]["type"] == typeFilter) or (typeFilter == None)):
+						# passes filter OR no filter at all
+						interested.append([isbn_code, ld])
+
+		# sort interested candidates based on their relevance factor (levenshtein distance)
+		UtilCLI.bubble_sort(interested, lambda a, b: 1 if a[1] > b[1] else (3 if a[1] == b[1] else 2))
+
+		print("SORTED", interested)
+
+		# returns (iterators not ideal here since it can not traverse backwards)
+		page_container = []
+		entries_per_page = search_params.get("size", 10)
+		candidate_n = len(interested)
+		for page_no in range(candidate_n //entries_per_page +1):
+			page_container.append(interested[(page_no) *entries_per_page: min((page_no +1) *entries_per_page +1, candidate_n)])
+
+		return page_container
 
 class HistoryManager:
 	def __init__(self):
@@ -313,6 +350,7 @@ class LibCLI:
 	def __init__(self):
 		# objects
 		self.authManager = AuthManager()
+		self.libraryManager = LibraryData() # initiated class
 
 		# states
 		self.active = True
@@ -320,6 +358,9 @@ class LibCLI:
 		# session memory
 		self.username = ""
 		self.session_start = time.perf_counter();
+
+		# do some preprocessing on the book database (isbn.json)
+		self.libraryManager.process_data();
 
 	def create_new_screen(self):
 		return Screen("{} | {}\n".format(self.username, self.access_level_verbose))
@@ -356,7 +397,7 @@ class LibCLI:
 		# get a valid username
 		username = ""
 		for u_retries in range(3):
-			username_inp = input("Username: ")
+			username_inp = input("Username: ").lower() # case-insensitive usernames
 
 			if len(username_inp) == 0:
 				print("Empty username entered, please try again.")
@@ -406,6 +447,115 @@ class LibCLI:
 
 		data = database_engine.created_readers["isbn"]
 
+	def search_interface(self):
+		# get user input search query
+		# returns a valid isbn after searching
+
+		# show 10 entries of search results
+		entries_limit = 10
+
+		# reserved vertical screen space for search results
+		# initial whitespace value
+		search_results_repr = "\n" *(entries_limit +1) # +1 for "searched for" header
+
+		# control loop
+		searching = True # state
+		while searching:
+			# display result, new screen
+			screen = self.create_new_screen()
+			screen.build("\n\n\n{}".format(search_results_repr))
+			screen.build("\n\n")
+
+			# out screen
+			screen.out()
+
+			# get search query
+			search_query = input("Search (title): ")
+
+			# get search results
+			search_results_pages = self.libraryManager.search_book({"query": search_query, "size": entries_limit})
+
+			# pageinated view
+			page_view = True # status
+			current_page_idx = 1;
+			page_n = len(search_results_pages) # total pages
+			prev_error = "\n" # placeholder for now
+			while page_view:
+				search_results = search_results_pages[current_page_idx -1]
+
+				# build header
+				search_results_repr = "Searching for '{}' [page {} - {}]\n".format(search_query, current_page_idx, page_n)
+
+				# build search results (in row view)
+				search_results_n = len(search_results)
+				for idx in range(entries_limit):
+					# search_entry: str[]; [0] = isbn, [1] = relevance factor (levenshtein distance)
+					if (idx < search_results_n):
+						search_entry = search_results[idx]
+						search_results_repr += " {}. [{}] {}\n".format(idx +1, search_entry[0], self.libraryManager.data[search_entry[0]]["title"])
+					else:
+						search_results_repr += "\n" # empty white space
+
+				# new screen
+				screen = self.create_new_screen()
+				screen.build("\n{}\n\n{}".format(prev_error, search_results_repr))
+				screen.build("\n\n")
+
+				# out screen
+				screen.out()
+
+				# build input prompt (with navigation aid)
+				page_inpt_prompt = ""
+				if (current_page_idx > 1 and current_page_idx < page_n):
+					page_inpt_prompt = "Enter an entry (index) [-2 for prev page; -1 for next page; 0 to exit]: "
+				elif (current_page_idx > 1):
+					# can only go previous page (i.e. page_n = 2)
+					page_inpt_prompt = "Enter an entry (index) [-2 for prev page; 0 to exit]: "
+				elif (current_page_idx < page_n):
+					# can go next page
+					page_inpt_prompt = "Enter an entry (index) [-1 for next page; 0 to exit]: "
+				else:
+					# no page navigation
+					page_inpt_prompt = "Enter an entry (index) [0 to exit]: "
+
+				selection = input(page_inpt_prompt).strip()
+				if (selection == "0"):
+					# exit
+					break
+				elif (selection == "-1"):
+					# next page
+					if (current_page_idx < page_n):
+						# go next page
+						prev_error = "" # reset error message
+						current_page_idx += 1
+					else:
+						# cannot go next page
+						prev_error = "[WARN]: No next page to proceed!"
+				elif (selection == "-2"):
+					# prev page
+					if (current_page_idx > 1):
+						# go prev page
+						prev_error = "" # reset error message
+						current_page_idx -= 1
+					else:
+						# cannot go prev page
+						prev_error = "[WARN]: No previous page to proceed!"
+				elif (selection.isdigit()):
+					# can only be a positive integer
+					selection_idx = int(selection) -1
+					if (selection_idx >= entries_limit):
+						# out of range error
+						prev_error = "[WARN]: Selection out of range, please select between 1-{} (inclusive).".format(entries_limit)
+					else:
+						# valid selection, return isbn
+						return search_results[selection_idx][0] # return the isbn
+				else:
+					# invalid selection
+					prev_error = "[WARN]: Malformed input received, please input a valid integer between 1-{} (inclusive).".format(entries_limit)
+
+
+
+
 
 	def kernel(self, command, args={}, flags=[]):
 		# executes the actual command
@@ -418,6 +568,8 @@ class LibCLI:
 				self.showBookDetails(args.name)
 			else:
 				self.showAllBooks(n=10)
+		elif (command == "search"):
+			isbn = self.search_interface()
 		elif (command == "add"):
 			book_data = {
 				"isbn": args.get("isbn"),
@@ -447,11 +599,16 @@ class LibCLI:
 					print("[WARN]: ISBN code provided in the wrong format, please conform to xxx-yyyyyyyyyyyyy (3x-13y).")
 
 				isbn_inpt = "";
-				while not LibraryData.validate_isbn(isbn_inpt):
+				while True:
 					# input required
 					isbn_inpt = input("ISBN (-1 to exit): ")
 					if (isbn_inpt == "-1"):
 						break
+					elif not LibraryData.validate_isbn(isbn_inpt):
+						print("[WARN]: {} is not a valid isbn, please conform to the xxx-yyyyyyyyyyyyy (3x-13y) format.".format(isbn_inpt))
+					else:
+						break # valid isbn
+
 
 				if (isbn_inpt == "-1"):
 					# cancel command
@@ -478,11 +635,15 @@ class LibCLI:
 					print("[WARN]: Title provided in wrong format, please conform to the restriction of at least 1 character.")
 
 				title_inpt = "";
-				while title_inpt == "":
+				while True:
 					# input required
 					title_inpt = input("Title (-1 to exit): ")
 					if (title_inpt == "-1"):
 						break
+					elif title_inpt == "":
+						print("[WARN]: Title input cannot be empty, please enter at least one character.")
+					else:
+						break # valid title
 
 				if (title_inpt == "-1"):
 					# cancel command
@@ -507,14 +668,18 @@ class LibCLI:
 				# no default data can be used
 				if (book_data["quantity"] != None):
 					# invalid isbn, warn user
-					print("[WARN]: Quantity provided in wrong format, please enter a positive non-negative integer without zero padding.")
+					print("[WARN]: Quantity provided in wrong format, please enter a positive non-zero integer without zero padding.")
 
 				qty_inpt = "";
-				while not qty_inpt.isdigit() or qty_inpt[0] == "0":
+				while True:
 					# input required
 					qty_inpt = input("Quantity (-1 to exit): ")
 					if (qty_inpt == "-1"):
 						break
+					elif (not qty_inpt.isdigit() or qty_inpt[0] == "0"):
+						print("[WARN]: Please enter a valid positive non-zero integer without any zero-padding.")
+					else:
+						break # valid qty input
 
 				if (qty_inpt == "-1"):
 					# cancel command
@@ -542,11 +707,15 @@ class LibCLI:
 					print("[WARN]: Type value provided in wrong format, please enter a selection of book types from 1-3 (inclusive).")
 
 				type_inpt = "";
-				while not type_inpt.isdigit() or not(1 <= int(type_inpt) <= 3):
+				while True:
 					# input required
 					type_inpt = input("Type\n\t1. Hard cover\n\t2. Paper back\n\t3. EBook\n(-1 to exit): ")
 					if (type_inpt == "-1"):
 						break
+					elif not type_inpt.isdigit() or not(1 <= int(type_inpt) <= 3):
+						print("[WARN]: Please enter within the valid range 1-3 (inclusive).")
+					else:
+						break # valid type selection
 
 				if (type_inpt == "-1"):
 					# cancel command
@@ -554,6 +723,35 @@ class LibCLI:
 				else:
 					# validated type input
 					book_data["type"] = int(type_inpt) # typecast it to an integer first
+
+			print(book_data)
+			success = self.libraryManager.add_book(book_data)
+
+			# change book_data["type"] to enum representative
+			for enum_repr in LibraryData.BOOK_TYPE:
+				if (book_data["type"] == LibraryData.BOOK_TYPE[enum_repr]):
+					book_data["type"] = enum_repr
+					break
+
+			# out new screen
+			screen = self.create_new_screen();
+			screen.build("\n\n\n\nUpdate book success!\nEntry details:\n")
+
+			max_width = 0
+			for key in book_data:
+				r_width = len(key) + len(str(book_data[key])) # row width
+				if (r_width) > max_width:
+					max_width = r_width
+			max_width += 2 # colon, space after colon
+
+			screen.build("+-{}-+\n".format("-" *max_width))
+			screen.build("| {:<{}} |\n".format("ISBN: {}".format(book_data["isbn"]), max_width))
+			screen.build("| {:<{}} |\n".format("Title: {}".format(book_data["title"]), max_width))
+			screen.build("| {:<{}} |\n".format("Type: {}".format(book_data["type"]), max_width))
+			screen.build("| {:<{}} |\n".format("Quantity: {}".format(book_data["quantity"]), max_width))
+			screen.build("+-{}-+\n\n\n".format("-" *max_width))
+			screen.out();
+
 
 
 	def interface(self):
@@ -594,9 +792,6 @@ class LibCLI:
 
 
 if __name__ == "__main__":
-	# do some preprocessing on the book database (isbn.json)
-	LibraryData().process_data();
-
 	# call login handler to perform login
 	CLI = LibCLI();
 
@@ -611,5 +806,3 @@ if __name__ == "__main__":
 	# run commands (initiate main control loop)
 	while CLI.active:
 		CLI.interface()
-
-LibCLI().login_handler();
