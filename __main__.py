@@ -155,8 +155,10 @@ class LibraryData:
 		self.data = database_engine.created_readers["isbn"]
 
 		# will be populated when self.process_data() is called
-		self.sorted_isbn = [];
-		self.sorted_title = [];
+		self.sorted_isbn = []
+		self.sorted_title = []
+
+		self.total_entries = -1 # will be initialised
 
 	def validate_isbn(isbn_code):
 		# returns true if isbn is validated, follows 3x-13y format
@@ -182,9 +184,13 @@ class LibraryData:
 		alpha_data = []
 		isbn_data = []
 
+		self.total_entries = 0 # reset counter first
 		for isbn in self.data:
 			alpha_data.append([self.data[isbn]["title"], isbn])
 			isbn_data.append(isbn)
+
+			# increment total entries
+			self.total_entries += 1
 
 		UtilCLI.bubble_sort(alpha_data, lambda a, b: UtilCLI.compare_str(a[0], b[0])) # wrap in lambda since elements of alpha_data is [title, isbn]
 		UtilCLI.bubble_sort(isbn_data, UtilCLI.compare_str) # no need to be wrapped
@@ -484,7 +490,7 @@ class LibCLI:
 				search_results = search_results_pages[current_page_idx -1]
 
 				# build header
-				search_results_repr = "Searching for '{}' [page {} - {}]\n".format(search_query, current_page_idx, page_n)
+				search_results_repr = "Searching for '{}' [page {} - {}; out of {} entries]\n".format(search_query, current_page_idx, page_n, self.libraryManager.total_entries)
 
 				# build search results (in row view)
 				search_results_n = len(search_results)
