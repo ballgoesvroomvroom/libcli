@@ -1,9 +1,9 @@
 import time
 import random
 import json
+import hashlib
 import os
 from os import path
-import hashlib
 
 from includes.database_engine import database_engine
 
@@ -165,7 +165,7 @@ class LibraryData:
 			return False
 
 		s = isbn_code.split("-")
-		if (len(s) != 2 or len(s[0]) != 3 or len(s[1]) != 13):
+		if (len(s) != 2 or len(s[0]) != 3 or len(s[1]) != 10):
 			# invalid length
 			return False
 
@@ -596,7 +596,7 @@ class LibCLI:
 				# no default data can be used
 				if (book_data["isbn"] != None):
 					# invalid isbn, warn user
-					print("[WARN]: ISBN code provided in the wrong format, please conform to xxx-yyyyyyyyyyyyy (3x-13y).")
+					print("[WARN]: ISBN code provided in the wrong format, please conform to xxx-yyyyyyyyyy (3x-10y).")
 
 				isbn_inpt = "";
 				while True:
@@ -605,7 +605,7 @@ class LibCLI:
 					if (isbn_inpt == "-1"):
 						break
 					elif not LibraryData.validate_isbn(isbn_inpt):
-						print("[WARN]: {} is not a valid isbn, please conform to the xxx-yyyyyyyyyyyyy (3x-13y) format.".format(isbn_inpt))
+						print("[WARN]: {} is not a valid isbn, please conform to the xxx-yyyyyyyyyy (3x-10y) format.".format(isbn_inpt))
 					else:
 						break # valid isbn
 
