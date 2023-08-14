@@ -73,7 +73,7 @@ class DatabaseReader:
 	def __setitem__(self, key, value):
 		self.content[key] = value
 
-	def __del__(self, key):
+	def __delitem__(self, key):
 		# wrapper for the del operation
 		del self.content[key]
 
@@ -94,6 +94,6 @@ class DatabaseReader:
 	def push(self):
 		# save to file
 		with open(self.filepath, "w") as f:
-			f.write(json.dumps(self.content))
+			f.write(json.dumps(self.content, indent="\t"))
 
 database_engine = DatabaseEngine();

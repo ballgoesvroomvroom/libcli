@@ -72,7 +72,7 @@
 	"978-0262539029": {
 		"title": "Deep Learning",
 		"type": 2,
-		"quantity": 3
+		"quantity": 2
 	},
 	"978-0062316097": {
 		"title": "1984",
@@ -97,7 +97,7 @@
 	"978-0060935467": {
 		"title": "The Alchemist",
 		"type": 3,
-		"quantity": 3
+		"quantity": 2
 	},
 	"978-0321125217": {
 		"title": "Design Patterns: Elements of Reusable Object-Oriented Software",
@@ -114,11 +114,6 @@
 		"type": 3,
 		"quantity": 7
 	},
-	"978-0452284234": {
-		"title": "The Catcher in the Rye",
-		"type": 3,
-		"quantity": 4
-	},
 	"978-0062315007": {
 		"title": "The Hobbit",
 		"type": 3,
@@ -130,9 +125,9 @@
 		"quantity": 6
 	},
 	"978-0547928227": {
-		"title": "A Game of Thrones",
+		"title": "A Storm of Swords",
 		"type": 3,
-		"quantity": 8
+		"quantity": 4
 	},
 	"978-1452168387": {
 		"title": "The Subtle Art of Not Giving a F*ck",
@@ -143,11 +138,6 @@
 		"title": "Introduction to the Theory of Computation",
 		"type": 2,
 		"quantity": 3
-	},
-	"978-0553380163": {
-		"title": "Dune",
-		"type": 3,
-		"quantity": 5
 	},
 	"978-0735211292": {
 		"title": "Atomic Habits: An Easy & Proven Way to Build Good Habits & Break Bad Ones",
@@ -180,7 +170,7 @@
 		"quantity": 6
 	},
 	"978-0141439846": {
-		"title": "Dracula",
+		"title": "Frankenstein",
 		"type": 3,
 		"quantity": 3
 	},
@@ -188,11 +178,6 @@
 		"title": "The Fellowship of the Ring",
 		"type": 3,
 		"quantity": 5
-	},
-	"978-0064400558": {
-		"title": "Matilda",
-		"type": 3,
-		"quantity": 4
 	},
 	"978-0316769488": {
 		"title": "To Kill a Mockingbird (60th Anniversary Edition)",
@@ -207,37 +192,22 @@
 	"978-0143125471": {
 		"title": "The Goldfinch",
 		"type": 3,
-		"quantity": 5
+		"quantity": 4
 	},
 	"978-0060959470": {
 		"title": "The Power of Now: A Guide to Spiritual Enlightenment",
 		"type": 2,
 		"quantity": 4
 	},
-	"978-0547928227": {
-		"title": "A Clash of Kings",
-		"type": 3,
-		"quantity": 6
-	},
 	"978-0064409049": {
 		"title": "Charlotte's Web",
 		"type": 3,
 		"quantity": 3
 	},
-	"978-0307278739": {
-		"title": "Fahrenheit 451",
-		"type": 3,
-		"quantity": 5
-	},
 	"978-0064404990": {
 		"title": "Holes",
 		"type": 3,
-		"quantity": 4
-	},
-	"978-0452284234": {
-		"title": "The Grapes of Wrath",
-		"type": 3,
-		"quantity": 6
+		"quantity": 3
 	},
 	"978-0141188936": {
 		"title": "Nineteen Eighty-Four",
@@ -245,28 +215,13 @@
 		"quantity": 3
 	},
 	"978-0812980483": {
-		"title": "The Catcher in the Rye",
-		"type": 3,
-		"quantity": 5
-	},
-	"978-0547928227": {
-		"title": "A Storm of Swords",
-		"type": 3,
-		"quantity": 4
-	},
-	"978-0452284234": {
-		"title": "The Shining",
-		"type": 3,
-		"quantity": 6
-	},
-	"978-0141439846": {
-		"title": "Frankenstein",
-		"type": 3,
-		"quantity": 3
-	},
-	"978-0812980483": {
 		"title": "The Picture of Dorian Gray",
 		"type": 3,
 		"quantity": 5
+	},
+	"978-0123456789": {
+		"title": "Circles",
+		"type": 1,
+		"quantity": 24
 	}
 }
