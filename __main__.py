@@ -192,22 +192,53 @@ class LibraryData:
 		self.total_entries = -1 # will be initialised
 
 	def validate_isbn(isbn_code):
-		# returns true if isbn is validated, follows 3x-13y format
+		# returns true if isbn is validated, accepts both 10 mod and 11 mod versions
+		# compares the check digit
 		if (isbn_code.find("-") == -1):
-			# no hyphen
-			return False
+			# no hyphen, 10 digit isbn
+			if len(isbn_code) != 10:
+				return False
+			else:
+				# exactly 10 chars, compute check digit
+				if not (isbn_code[:-1].isdigit()):
+					# can only contain digits (portion until check digit, exclusive)
+					return False
+				else:
+					checksum = 0
+					for idx in range(9):
+						factor = 10 -idx
+						checksum += int(isbn_code[idx]) *factor
 
-		s = isbn_code.split("-")
-		if (len(s) != 2 or len(s[0]) != 3 or len(s[1]) != 10):
-			# invalid length
-			return False
+					# compute check digit (last digit of isbn)
+					checkdigit = checksum %11
+					if checkdigit == 10:
+						checkdigit = "X"
+					else:
+						checkdigit = str(checkdigit)
+					return isbn_code[-1] == checkdigit
+		else:
+			s = isbn_code.split("-")
+			if (len(s) != 2 or len(s[0]) != 3 or len(s[1]) != 10):
+				# invalid length
+				return False
 
-		if (not s[0].isdigit() or not (s[1].isdigit())):
-			# not valid digits
-			return False
+			if (not s[0].isdigit() or not (s[1][:-1].isdigit())): # don't pass 'X' check digit into .isdigit()
+				# not valid digits
+				return False
 
-		# passed all checks
-		return True
+			# compute checkdigit
+			alternate = True
+			digits = s[0] +s[1] # string concatenation
+			checksum = 10
+			for idx in range(12):
+				factor = 1 if alternate else 3
+				checksum += int(digits[idx]) *factor
+
+				alternate = not alternate # toggle
+
+			# compute check digit
+			checkdigit = checksum %10
+			return int(isbn_code[-1]) == checkdigit
 
 	def duplicate_isbn(self, isbn):
 		# returns true if unique isbn
@@ -1439,7 +1470,7 @@ class LibCLI:
 						# no default data can be used
 						if (book_data["isbn"] != None):
 							# invalid isbn, warn user
-							print("[WARN]: ISBN code may be a duplicate or may have been provided in the wrong format, please conform to xxx-yyyyyyyyyy (3x-10y).")
+							print("[WARN]: ISBN code may be a duplicate or may have been provided in the wrong format, please ensure the checkdigit is correct.")
 
 						isbn_inpt = "";
 						while True:
@@ -1448,7 +1479,7 @@ class LibCLI:
 							if (isbn_inpt == "-1"):
 								break
 							elif not LibraryData.validate_isbn(isbn_inpt):
-								print("[WARN]: {} is not a valid isbn, please conform to the xxx-yyyyyyyyyy (3x-10y) format.".format(isbn_inpt))
+								print("[WARN]: {} is not a valid isbn, please ensure the checkdigit is correct.".format(isbn_inpt))
 							elif self.libraryManager.duplicate_isbn(isbn_inpt):
 								print("[WARN]: {} entry already exists with book title: '{}', please enter the correct ISBN.".format(isbn_inpt, self.libraryManager.data[isbn_inpt]["title"]))
 							else:

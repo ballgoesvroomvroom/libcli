@@ -1,17 +1,17 @@
 {
 	"978-0134846019": {
 		"title": "Data Analytics with Spark Using Python",
-		"type": 3,
+		"type": 2,
 		"quantity": 6
 	},
 	"978-0133316032": {
 		"title": "Children's Reading",
-		"type": 2,
+		"type": 3,
 		"quantity": 3
 	},
 	"978-1292100142": {
 		"title": "Global Marketing, 7th Edition",
-		"type": 2,
+		"type": 3,
 		"quantity": 8
 	},
 	"978-1587147029": {
@@ -19,9 +19,14 @@
 		"type": 1,
 		"quantity": 5
 	},
+	"": {
+		"title": "Learn Data Analytics in 100 days",
+		"type": 2,
+		"quantity": 10
+	},
 	"978-0590353427": {
 		"title": "Harry Potter and the Sorcerer's Stone",
-		"type": 3,
+		"type": 2,
 		"quantity": 10
 	},
 	"978-0061120084": {
