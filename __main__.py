@@ -51,6 +51,28 @@ class UtilCLI:
 
 		return distance[lb -1][la -1]
 
+	def get_command(command_inpt, command_list):
+		# returns an index within command_list, if no commands found, suggest close proximity commands
+		# returns if exact match: [True, idx_of_element: int]
+		# returns if no exact found: [False, suggestion: str?]; suggestion may be None if threshold not met
+		try:
+			idx = command_list.index(command_inpt.lower())
+			return [True, idx]
+		except ValueError:
+			min_distance = 10 # acting threshold (stores minimum value)
+			min_ele = None # store contents of minimal element
+			for x in command_list:
+				d = UtilCLI.levenshtein_distance(command_inpt, x)
+				if (d) < min_distance:
+					min_distance = d
+					min_ele = x
+
+					if (d <= 1):
+						# closest you'll get
+						return [False, min_ele]
+
+			return [False, min_ele]
+
 	def compare_str(a, b):
 		# a, b: str
 		# compares both string alphabetically to determine order
@@ -154,6 +176,14 @@ class LibraryData:
 	def __init__(self):
 		self.data = database_engine.created_readers["isbn"]
 
+		# parse self.BOOK_TYPE
+		self.BOOK_TYPE_MAPPED = []
+		for type_idx in range(3):
+			for key in self.BOOK_TYPE.keys():
+				if type_idx +1 == self.BOOK_TYPE[key]:
+					self.BOOK_TYPE_MAPPED.append(key)
+					break
+
 		# will be populated when self.process_data() is called
 		self.sorted_isbn = []
 		self.sorted_title = []
@@ -219,6 +249,50 @@ class LibraryData:
 
 		# return status true
 		return True
+
+	def update_book(self, isbn, payload):
+		# payload: {title: str?, quantity: int?, type: int?}
+		# return boolean (success state)
+		if (self.data.get(isbn)):
+			book_data = self.data[isbn]
+
+			title = book_data["title"]
+			if ("title" in payload):
+				# validate title
+				if type(payload["title"]) != str or payload["title"] == "":
+					# not a string or an empty string
+					return False
+				else:
+					# valid title
+					title = payload["title"]
+
+			quantity = book_data["quantity"]
+			if ("quantity" in payload):
+				# validate quantity
+				if type(payload["quantity"]) != int or payload["quantity"] < 0:
+					# not an int, OR value is a zero/negative number
+					return False
+				else:
+					# valid quantity
+					quantity = payload["quantity"]
+
+			book_type = book_data["type"]
+			if ("type" in payload):
+				# validate type
+				if type(payload["type"]) != int or payload["type"] <= 0 or payload["type"] >= 4:
+					# not an int, OR value <= 0, OR value >= 0
+					return False
+				else:
+					# valid type
+					book_type = payload["type"]
+
+			# assign attributes
+			book_data["title"] = title
+			book_data["quantity"] = quantity
+			book_data["type"] = book_type
+
+			# success
+			return True
 
 	def search_book(self, search_params):
 		# search_params: {query: str?, type: integer?, size: integer?}
@@ -318,7 +392,7 @@ class AuthManager:
 			else:
 				return al
 		else:
-			return None
+			return
 
 	def authenticate_creds(self, username, password):
 		# returns 1 upon successful authentication
@@ -343,13 +417,15 @@ class Screen:
 		# append content to self.content
 		self.content += str(content)
 
-	def out(self):
+	def out(self, reuse=False):
 		# clear screen first
+		# reuse: boolean (if false, will throw away reference to self.content)
 		UtilCLI.clear();
 		print(self.content);
 
-		# remove reference from self.content
-		self.content = None # await GC to clean up object
+		if not reuse:
+			# remove reference from self.content
+			self.content = None # await GC to clean up object
 
 
 class LibCLI:
@@ -370,6 +446,85 @@ class LibCLI:
 
 	def create_new_screen(self):
 		return Screen("{} | {}\n".format(self.username, self.access_level_verbose))
+
+	def getBookTypeOptionsRepr(self):
+		# returns a selection representation in the format of "1. book_type_1\n2. book_type_2\n3. book_type_3\n"
+		# to accommodate a flexible book type listing
+		# TO IMPROVE: cache computed string (minimal savings)
+		representation = ""
+		idx = 0
+		for book_type in self.libraryManager.BOOK_TYPE_MAPPED:
+			idx += 1
+			representation += "{}. {}\n".format(idx, book_type)
+
+		return representation
+
+	def create_book_details_banner_diff(self, book_data_arr):
+		# book_data_arr: book_data[] stores book_data in a list (book_data contains 'isbn' key)
+		# unlike create_book_details_banner(), does not accept isbn (this method mainly for building visual difference diagrams)
+
+		# build width array (max_width data)
+		max_width_arr = []
+		for book_data in book_data_arr:
+			max_width = 0 # initialise
+			for key in book_data.keys():
+				r_width = len(key) + len(str(book_data[key]))
+				if (r_width > max_width):
+					max_width = r_width
+			max_width_arr.append(max_width +2) # colon, space after colon
+
+		# build line by line
+		representation = ""
+		gutter_seq = " " *8 # 4 space characters
+		total_book = len(book_data_arr)
+		for idx in range(total_book):
+			suffix = gutter_seq if idx +1 < total_book else "\n"
+			representation += "+-{}-+{}".format("-" *max_width_arr[idx], suffix)
+
+		for idx in range(total_book):
+			suffix = gutter_seq if idx +1 < total_book else "\n"
+			representation += "| {:<{}} |{}".format("ISBN: {}".format(book_data_arr[idx]["isbn"]), max_width_arr[idx], suffix)
+
+		for idx in range(total_book):
+			suffix = "  {}>  ".format("-" *(len(gutter_seq) -5)) if idx +1 < total_book else "\n"
+			representation += "| {:<{}} |{}".format("Title: {}".format(book_data_arr[idx]["title"]), max_width_arr[idx], suffix)
+
+		for idx in range(total_book):
+			suffix = "  {}>  ".format("-" *(len(gutter_seq) -5)) if idx +1 < total_book else "\n"
+			representation += "| {:<{}} |{}".format("Type: {}".format(book_data_arr[idx]["type"]), max_width_arr[idx], suffix)
+
+		for idx in range(total_book):
+			suffix = gutter_seq if idx +1 < total_book else "\n"
+			representation += "| {:<{}} |{}".format("Quantity: {}".format(book_data_arr[idx]["quantity"]), max_width_arr[idx], suffix)
+
+		for idx in range(total_book):
+			suffix = gutter_seq if idx +1 < total_book else "\n"
+			representation += "+-{}-+{}".format("-" *max_width_arr[idx], suffix)
+
+		representation += "\n\n" # vertical padding
+		return representation
+
+	def create_book_details_banner(self, isbn):
+		# creates a table view of book details
+		# returns a string representation to be build into a screen object
+		book_data = self.libraryManager.data.get(isbn)
+		if (book_data == None):
+			return ""
+
+		max_width = len("ISBN") +len(isbn)
+		for key in book_data.keys():
+			r_width = len(key) + len(str(book_data[key])) # row width
+			if (r_width) > max_width:
+				max_width = r_width
+		max_width += 2 # colon, space after colon
+
+		representation = "+-{}-+\n".format("-" *max_width)
+		representation += "| {:<{}} |\n".format("ISBN: {}".format(isbn), max_width)
+		representation += "| {:<{}} |\n".format("Title: {}".format(book_data["title"]), max_width)
+		representation += "| {:<{}} |\n".format("Type: {}".format(book_data["type"]), max_width)
+		representation += "| {:<{}} |\n".format("Quantity: {}".format(book_data["quantity"]), max_width)
+		representation += "+-{}-+\n\n\n".format("-" *max_width)
+		return representation
 
 	def set_user(self, username):
 		self.username = username
@@ -444,39 +599,195 @@ class LibCLI:
 
 		return True # returns true so main control flow knows login was successful
 
-	def displayBooks(n=10):
-		# displays the interface to select books (a list is visually available)
-		# sorted by isbn no (s flag) or by title name (a flag)
-		# n being page size
-		screen = self.create_new_screen()
-		screen.build("Search for books\n\n")
+	def update_book_interface(self, isbn):
+		# new screen
+		edit_screen = self.create_new_screen()
+		edit_screen.build("\n\nModifying entry for [{}]:\n{}[Ctrl + C] to exit.\n".format(isbn, self.create_book_details_banner(isbn)))
 
-		data = database_engine.created_readers["isbn"]
+		# out screen
+		edit_screen.out(reuse=True)
 
-	def search_interface(self):
+		# construct the change payload (to be sent to self.libraryManager.update_book())
+		payload = {}
+
+		# action list
+		action_list = ["isbn", "title", "quantity", "type", "save"]
+
+		# construct history to rebuild screen afterwards
+		action_hist = [] # elements: [action_code, trigger, input, output_msg]
+
+		supplying_changes = True
+		while supplying_changes:
+			# ask for input
+			action = ""
+			try:
+				action = input("Action: ")
+			except KeyboardInterrupt:
+				# out home screen
+				screen = self.create_new_screen();
+				screen.build("\n\n\n\nExitted search （；´д｀）ゞ.\n\n")
+				screen.out()
+
+				# exit
+				return
+
+			mapped_action = UtilCLI.get_command(action, action_list)
+			if mapped_action[0]:
+				# switch statement :(
+				input_value = "" # for history management
+				output_msg = ""
+				if mapped_action[1] == 0:
+					# cannot change isbn
+					pass
+				elif mapped_action[1] == 1:
+					# change title
+					title = input("New title: ")
+					if (title == ""):
+						# title cannot be empty
+						output_msg = "[WARN]: Title cannot be empty"
+					else:
+						input_value = title
+						output_msg = "[SUCCESS]: Title changed to '{}'.".format(title)
+						payload["title"] = title
+				elif mapped_action[1] == 2:
+					# change quantity
+					qty = input("Quantity: ")
+					if not (qty.isdigit()):
+						# input is not a zero/positive integer
+						output_msg = "[WARN]: Quantity must be a valid positive (or zero) integer."
+					else:
+						input_value = qty
+						output_msg = "[SUCCESS]: Quantity changed to {}.".format(qty)
+						payload["quantity"] = int(qty)
+				elif mapped_action[1] == 3:
+					# change type (idx of 3)
+					book_type = input("Type\n{}: ".format(self.getBookTypeOptionsRepr()))
+					if not (book_type.isdigit()) or int(book_type) <= 0 or int(book_type) >= 4:
+						# input is not an integer within the range 1 <= x <= 3
+						output_msg = "[WARN]: Book type must be an integer within the range 1 and 3 (inclusive)."
+					else:
+						input_value = book_type
+						output_msg = "[SUCCESS]: Book type changed to {}.".format(book_type)
+						payload["type"] = int(book_type)
+				elif mapped_action[1] == 4:
+					# save changes
+
+					# confirmation
+					# view changes, construct the new book_data from payload
+					payload["isbn"] = isbn # important when constructing diff diagrams
+					storage = {
+						# populate exisiting values here (for comparison to feed into .create_book_details_banner_diff())
+						"isbn": isbn
+					}
+					for key in self.libraryManager.data[isbn].keys():
+						if not (key in payload):
+							# re-use current values
+							payload[key] = self.libraryManager.data[isbn][key]
+
+						# build storage (original data structure and values)
+						storage[key] = self.libraryManager.data[isbn][key]
+
+					# visual diff diagram
+					confirmation_screen = self.create_new_screen();
+					confirmation_screen.build("\n\nPlease confirm the changes modified.\n")
+					confirmation_screen.build(self.create_book_details_banner_diff([storage, payload]))
+					confirmation_screen.build("\n\n")
+
+					# out screen
+					confirmation_screen.out()
+
+					# ask for confirmation
+					confirmation_inpt = input("Confirm (y/n): ").lower()
+					if confirmation_inpt == "y":
+						# confirmed
+						success = self.libraryManager.update_book(isbn, payload)
+						if (success):
+							print("[SUCCESS]: Changes modified.")
+							supplying_changes = False # changes made
+						else:
+							# should not happen since inputs have been validated
+							print("[ERROR]: Failed to modify, please try again.")
+					else:
+						# no confirmation, go back to continuing modifying
+						# build history to screen (to be out again if needed)
+						for hist_data in action_hist:
+							edit_screen.build("Action: {}\n".format(hist_data[1]))
+							if (hist_data[0] == 0):
+								# isbn
+								# nothing
+								pass
+							elif (hist_data[0] == 1):
+								# change title
+								follow_up_inpt = "New title: {}\n"
+							elif (hist_data[0] == 2):
+								# change quantity
+								follow_up_inpt = "Quantity: {}\n"
+							elif (hist_data[0] == 3):
+								# change type
+								follow_up_inpt = "Type\n{}: {{}}\n".format(self.getBookTypeOptionsRepr())
+							edit_screen.build(follow_up_inpt.format(hist_data[2]))
+							edit_screen.build("{}\n".format(hist_data[3]))
+
+						edit_screen.out(reuse=True)
+
+				# show output
+				print(output_msg)
+
+				# build history
+				action_hist.append([mapped_action[1], action, input_value, output_msg])
+			else:
+				# failed to map input to a known command
+				if (mapped_action[1]):
+					# suggestion given
+					print("[WARN]: No command found for '{}', did you mean '{}'.".format(action, mapped_action[1]))
+				else:
+					# no suggestion given
+					print("[WARN]: No command found for '{}'.".format(action))
+
+	def search_interface(self, args={}, flags=[]):
 		# get user input search query
-		# returns a valid isbn after searching
+		# returns a valid isbn after searching (returns None on exit)
+
+		# -d flag for detailed view
+		is_detailed = False
+		try:
+			is_detailed = flags.index("d") >= 0 # check for presence of d flag
+		except ValueError:
+			# no flags found
+			pass
 
 		# show 10 entries of search results
-		entries_limit = 10
+		entries_limit = args.get("entries_limit", 10) # default value of 10
 
 		# reserved vertical screen space for search results
 		# initial whitespace value
-		search_results_repr = "\n" *(entries_limit +1) # +1 for "searched for" header
+		search_results_repr = "\n" *(entries_limit *(2 if is_detailed else 1) +1) # +1 for "searched for" header
 
 		# control loop
 		searching = True # state
 		while searching:
 			# display result, new screen
 			screen = self.create_new_screen()
-			screen.build("\n\n\n{}".format(search_results_repr))
+			screen.build("\n\n\n\n{}".format(search_results_repr))
 			screen.build("\n\n")
 
 			# out screen
 			screen.out()
 
 			# get search query
-			search_query = input("Search (title): ")
+			search_query = ""
+			try:
+				search_query = input("[Ctrl + C] to exit.\nSearch (title): ")
+			except KeyboardInterrupt:
+				# control C to exit
+				searching = False
+
+				# out home screen
+				screen = self.create_new_screen();
+				screen.build("\n\n\n\nExitted search （；´д｀）ゞ.\n\n")
+				screen.out()
+
+				return # exit
 
 			# get search results
 			search_results_pages = self.libraryManager.search_book({"query": search_query, "size": entries_limit})
@@ -499,6 +810,11 @@ class LibCLI:
 					if (idx < search_results_n):
 						search_entry = search_results[idx]
 						search_results_repr += " {}. [{}] {}\n".format(idx +1, search_entry[0], self.libraryManager.data[search_entry[0]]["title"])
+
+						if is_detailed:
+							# detailed view, show type and quantity
+							# \t character has too wide of a space here
+							search_results_repr += "    - Type: {} | Quantity: {}\n".format(self.libraryManager.data[search_entry[0]]["type"], self.libraryManager.data[search_entry[0]]["quantity"])
 					else:
 						search_results_repr += "\n" # empty white space
 
@@ -532,32 +848,32 @@ class LibCLI:
 					# next page
 					if (current_page_idx < page_n):
 						# go next page
-						prev_error = "" # reset error message
+						prev_error = "\n" # reset error message
 						current_page_idx += 1
 					else:
 						# cannot go next page
-						prev_error = "[WARN]: No next page to proceed!"
+						prev_error = "[WARN]: No next page to proceed!\n"
 				elif (selection == "-2"):
 					# prev page
 					if (current_page_idx > 1):
 						# go prev page
-						prev_error = "" # reset error message
+						prev_error = "\n" # reset error message
 						current_page_idx -= 1
 					else:
 						# cannot go prev page
-						prev_error = "[WARN]: No previous page to proceed!"
+						prev_error = "[WARN]: No previous page to proceed!\n"
 				elif (selection.isdigit()):
 					# can only be a positive integer
 					selection_idx = int(selection) -1
 					if (selection_idx >= entries_limit):
 						# out of range error
-						prev_error = "[WARN]: Selection out of range, please select between 1-{} (inclusive).".format(entries_limit)
+						prev_error = "[WARN]: Selection out of range, please select between 1-{} (inclusive).\n".format(entries_limit)
 					else:
 						# valid selection, return isbn
 						return search_results[selection_idx][0] # return the isbn
 				else:
 					# invalid selection
-					prev_error = "[WARN]: Malformed input received, please input a valid integer between 1-{} (inclusive).".format(entries_limit)
+					prev_error = "[WARN]: Malformed input received, please input a valid integer between 1-{} (inclusive).\n".format(entries_limit)
 
 
 
@@ -574,8 +890,15 @@ class LibCLI:
 				self.showBookDetails(args.name)
 			else:
 				self.showAllBooks(n=10)
+		elif (command == "update"):
+			isbn = self.search_interface(args, flags)
+			if isbn == None:
+				# exit (home screen already out)
+				return
+
+			self.update_book_interface(isbn)
 		elif (command == "search"):
-			isbn = self.search_interface()
+			isbn = self.search_interface(args, flags)
 		elif (command == "add"):
 			book_data = {
 				"isbn": args.get("isbn"),

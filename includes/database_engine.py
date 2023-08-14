@@ -59,6 +59,10 @@ class DatabaseReader:
 		# use self.filename as hash without the .json extension
 		self.hash = "".join(self.filename.split(".")[:-1])
 
+	def get(self, *args):
+		# wrapper
+		return self.content.get(*args)
+
 	def __getitem__(self, key):
 		# wrapper for referencing the data directly
 		if (key in self.content):
@@ -68,6 +72,10 @@ class DatabaseReader:
 
 	def __setitem__(self, key, value):
 		self.content[key] = value
+
+	def __del__(self, key):
+		# wrapper for the del operation
+		del self.content[key]
 
 	def __contains__(self, item):
 		# for 'in' operator
