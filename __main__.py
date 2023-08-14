@@ -210,8 +210,9 @@ class LibraryData:
 						checksum += int(isbn_code[idx]) *factor
 
 					# compute check digit (last digit of isbn)
-					checkdigit = checksum %11
-					if checkdigit == 10:
+					checkdigit = 11 -(checksum %11)
+					print(checksum, checkdigit)
+					if checkdigit == 1:
 						checkdigit = "X"
 					else:
 						checkdigit = str(checkdigit)
@@ -237,7 +238,7 @@ class LibraryData:
 				alternate = not alternate # toggle
 
 			# compute check digit
-			checkdigit = checksum %10
+			checkdigit = 10 -(checksum %10)
 			return int(isbn_code[-1]) == checkdigit
 
 	def duplicate_isbn(self, isbn):
