@@ -6,8 +6,8 @@
 		"loaning": [],
 		"loaned_books": []
 	},
-	"msJane": {
-		"password": "041c0e627d8c2dd7a4e8c1c9b8d039f9ea8696fed6ef3caa92e21ab5f617a1191fe2123e67216295bf6831e524a166167bc1c2d82e0af9d80f4dd794ba0199e2",
+	"msjane": {
+		"password": "693b4c470479888e67438671a342be55b55a39f54e1721abd8f3a951bc92e90baae2d3284ed366ea2e0ce3f07ceb27b53a26ffa85a100447f4306af269fe228f",
 		"access_level": 2,
 		"loaning": [],
 		"loaned_books": []
